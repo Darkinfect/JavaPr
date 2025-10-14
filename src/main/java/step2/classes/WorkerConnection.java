@@ -1,14 +1,15 @@
-package step1.classes;
+package step2.classes;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class WorkerConnection {
-    private String filename;
+    private static final String path = "src/main/resources/";
+    private final String filename;
 
     public WorkerConnection(String filename) {
-        this.filename = filename;
+        this.filename = path + filename;
     }
 
     public void saveWorkers(List<Worker> workers) throws IOException {
