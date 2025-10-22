@@ -17,10 +17,10 @@ public class Main {
         try {
             List<Worker> workers = new ArrayList<>();
             workers.add(new Manager("Иван Иванов", 35, 80000));
-            workers.add(new Analyst("Анна Петрова", 28, 60000));
-            workers.add(new Programmer("Сергей Смирнов", 30, 90000));
-            workers.add(new Tester("Елена Кузнецова", 25, 50000));
-            workers.add(new Designer("Ольга Васильева", 27, 70000));
+            workers.add(new Analyst("Косцов Артём", 28, 60000));
+            workers.add(new Programmer("Каленик Илья", 30, 90000));
+            workers.add(new Tester("Илюша Тестер", 25, 50000));
+            workers.add(new Designer("Бутрамеев Иван Павлович", 27, 70000));
 
             connector.saveWorkers(workers);
 

@@ -6,11 +6,9 @@ import java.io.Serializable;
 public abstract class Worker implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
-
     protected String name;
     protected int age;
     protected transient double salary;
-
     public Worker(String name, int age, double salary) {
         if (age < 18 || age > 70) {
             throw new IllegalArgumentException("Возраст должен быть от 18 до 70");

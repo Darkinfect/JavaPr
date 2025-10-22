@@ -11,7 +11,7 @@ import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 public class UTF8BundleReader {
-    private ResourceBundle bundle;
+    private final ResourceBundle bundle;
     public UTF8BundleReader(String baseName, Locale locale){
         this.bundle = ResourceBundle.getBundle(baseName,locale, new UTF8Control());
     }

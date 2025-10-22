@@ -2,9 +2,12 @@ package step2.classes;
 
 import lombok.Getter;
 
+import javax.swing.text.DateFormatter;
 import java.io.Serial;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.logging.SimpleFormatter;
 
 public abstract class Worker implements Serializable {
     @Serial
@@ -41,7 +44,9 @@ public abstract class Worker implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("%s [Имя=%s, Возраст=%d, Зарплата=%.2f]",
-                this.getClass().getSimpleName(), name, age, salary);
+        SimpleDateFormat formatter = new SimpleDateFormat("hh:mm:ss yyyy-MM-dd");
+        String format = formatter.format(creationDate);
+        return String.format("%s [Имя=%s, Возраст=%d, Зарплата=%.2f, Время создания= %s ]",
+                this.getClass().getSimpleName(), name, age, salary,format);
     }
 }
