@@ -1,0 +1,8 @@
+.combo-box{
+       -fx-text-fill:black;
+       -fx-background-color:white;
+}
+ .combo-box:hover{
+       -fx-text-fill:white;
+       -fx-background-color:black;
+}

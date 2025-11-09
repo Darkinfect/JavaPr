@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.geometry.Insets?>
+<?import java.lang.String?>
+
+<!-- ЧЁРНЫЙ ДИЗАЙН - БЕЗ COMBOBOX ТИПА -->
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
+
+    <!-- ВЕРХНЯЯ ЧАСТЬ - ЧЁРНАЯ ШАПКА -->
+    <top>
+        <VBox style="-fx-background-color: #1a1a1a; -fx-padding: 15; -fx-border-color: #ff6600; -fx-border-width: 0 0 2 0;">
+            <HBox spacing="10" style="-fx-alignment: CENTER_LEFT;">
+                <Label text="🧸 Управление базой игрушек" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #ff6600;"/>
+                <TextField fx:id="searchField" prefWidth="200" promptText="🔍 Поиск по названию, поставщику, дате..." style="-fx-control-inner-background: #2a2a2a; -fx-text-fill: #ffffff; -fx-prompt-text-fill: #888888;"/>
+                <Button fx:id="searchButton" text="🔎 Поиск" style="-fx-padding: 8; -fx-background-color: #ff6600; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="loadBackupButton" text="💾 Загрузить БД" style="-fx-padding: 8 16; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- ЛЕВАЯ ЧАСТЬ - ЧЁРНОЕ МЕНЮ -->
+    <left>
+        <VBox style="-fx-background-color: #0d0d0d; -fx-padding: 15; -fx-spacing: 10; -fx-min-width: 200; -fx-border-color: #ff6600; -fx-border-width: 0 2 0 0;">
+            <Label text="🧸 МЕНЮ" style="-fx-text-fill: #ff6600; -fx-font-size: 14; -fx-font-weight: bold;"/>
+            <Button fx:id="fillDbButton" text="📥 Заполнить БД" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
+            <Button fx:id="refreshButton" text="🔄 Обновить" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
+            <Button fx:id="indexesButton" text="🔍 Индексы" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
+            <Button fx:id="addButton" text="➕ Добавить" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
+            <Button fx:id="deleteButton" text="🗑️ Удалить" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
+        </VBox>
+    </left>
+
+    <!-- ЦЕНТР - ТАБЛИЦА И КНОПКИ -->
+    <center>
+        <VBox style="-fx-padding: 15; -fx-spacing: 10; -fx-background-color: #1a1a1a;">
+            <HBox spacing="10">
+                <Button fx:id="sortButton" text="📊 Сортировка" style="-fx-padding: 8; -fx-background-color: #ff6600; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;"/>
+                <Button fx:id="exportButton" text="📥 Экспорт" style="-fx-padding: 8; -fx-background-color: #ff6600; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;"/>
+            </HBox>
+            <TableView fx:id="toysTable" style="-fx-font-size: 11; -fx-control-inner-background: #2a2a2a; -fx-table-cell-border-color: #333333;" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="codeColumn" text="Код" prefWidth="60"/>
+                    <TableColumn fx:id="nameColumn" text="Название" prefWidth="150"/>
+                    <TableColumn fx:id="minAgeColumn" text="Мин. возраст" prefWidth="100"/>
+                    <TableColumn fx:id="maxAgeColumn" text="Макс. возраст" prefWidth="100"/>
+                    <TableColumn fx:id="priceColumn" text="Цена (₽)" prefWidth="80"/>
+                    <TableColumn fx:id="quantityColumn" text="Кол-во" prefWidth="70"/>
+                    <TableColumn fx:id="dateColumn" text="Дата" prefWidth="120"/>
+                    <TableColumn fx:id="supplierColumn" text="Поставщик" prefWidth="120"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </center>
+
+    <!-- НИЖНЯЯ ЧАСТЬ - ЧЁРНЫЙ СТАТУС БАР -->
+    <bottom>
+        <VBox style="-fx-background-color: #0d0d0d; -fx-padding: 10; -fx-border-color: #ff6600; -fx-border-width: 2 0 0 0;">
+            <Label fx:id="statusLabel" text="✓ Готово" style="-fx-text-fill: #ff6600; -fx-font-weight: bold;"/>
+        </VBox>
+    </bottom>
+
+</BorderPane>
