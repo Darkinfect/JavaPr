@@ -163,15 +163,11 @@ public class ToyDatabase {
             File currentDataFile = new File(getDataFilePath());
 
             if (!currentDataFile.exists()) {
-                System.out.println("ℹ️ Текущих данных не найдено. Загружаю последний бекап...");
                 restoreFromBackup(latestBackup);
-                System.out.println("✅ Данные загружены из бекапа: " + latestBackup);
             } else {
-                System.out.println("✅ Текущие данные найдены");
                 loadIndexes();
             }
         } else {
-            System.out.println("ℹ️ Бекапов не найдено. Запуск с пустой базой.");
         }
     }
 

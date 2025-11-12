@@ -1,4 +1,5 @@
 package main.java;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.collections.FXCollections;
@@ -6,23 +7,19 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.beans.property.ReadOnlyStringWrapper;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
-/**
- * Контроллер с РАБОЧИМ методом удаления
- */
 public class ToyManagementController {
-
     @FXML public TableView<Toy> toysTable;
     @FXML public TextField searchField;
     @FXML public Label statusLabel;
-
     @FXML public Button fillDbButton;
     @FXML public Button refreshButton;
     @FXML public Button indexesButton;
@@ -32,105 +29,151 @@ public class ToyManagementController {
     @FXML public Button exportButton;
     @FXML public Button searchButton;
     @FXML public Button loadBackupButton;
-
     @FXML public TableColumn<Toy, String> codeColumn;
     @FXML public TableColumn<Toy, String> nameColumn;
     @FXML public TableColumn<Toy, Integer> minAgeColumn;
     @FXML public TableColumn<Toy, Integer> maxAgeColumn;
     @FXML public TableColumn<Toy, Double> priceColumn;
     @FXML public TableColumn<Toy, Integer> quantityColumn;
-    @FXML public TableColumn<Toy, LocalDate> dateColumn;
+    @FXML public TableColumn<Toy, String> dateColumn;
     @FXML public TableColumn<Toy, String> supplierColumn;
+
+    @FXML public MenuBar menuBar;
+    @FXML public MenuItem miOpenData, miOpenBackup, miExportCsv, miExit;
+    @FXML public MenuItem miAddToy, miDeleteToy, miBuildIndexes, miFillTestData;
+    @FXML public CheckMenuItem miShowStatusHelp;
+    @FXML public MenuItem miSort, miRefresh, miAbout, miHelp;
+    @FXML public Label helpLabel;
 
     private ToyDatabase database;
     private final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     private Timer autoBackupTimer;
 
+    @FXML
     public void initialize() {
         try {
-            System.out.println("📱 Инициализация контроллера...");
-
             database = new ToyDatabase();
-            System.out.println("✅ БД инициализирована");
-
             database.loadIndexes();
-            System.out.println("✅ Индексы загружены");
-
             setupTableColumns();
-            System.out.println("✅ Таблица настроена");
-
             setupButtons();
-            System.out.println("✅ Кнопки подключены");
-
+            setupMenu();
+            setupContextHelp();
             refreshTable();
-            System.out.println("✅ Таблица загружена");
-
             startAutoBackupTimer();
-            System.out.println("✅ Автобекап запущен");
-
+            updateStatus("Готово");
         } catch (Exception e) {
-            System.err.println("❌ Ошибка инициализации: " + e.getMessage());
             e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Ошибка инициализации",
-                    "❌ " + e.getMessage());
-        }
-    }
-
-    private void setupButtons() {
-        if (fillDbButton != null) fillDbButton.setOnAction(e -> handleFillDatabase());
-        if (refreshButton != null) refreshButton.setOnAction(e -> handleRefresh());
-        if (indexesButton != null) indexesButton.setOnAction(e -> handleBuildIndexes());
-        if (addButton != null) addButton.setOnAction(e -> handleAddToy());
-        if (deleteButton != null) deleteButton.setOnAction(e -> handleDelete());
-        if (sortButton != null) sortButton.setOnAction(e -> handleSort());
-        if (exportButton != null) exportButton.setOnAction(e -> handleExport());
-        if (searchButton != null) searchButton.setOnAction(e -> handleSearch());
-        if (loadBackupButton != null) loadBackupButton.setOnAction(e -> handleLoadBackup());
-
-        if (searchField != null) {
-            searchField.setOnKeyPressed(event -> {
-                if (event.getCode().toString().equals("ENTER")) {
-                    handleSearch();
-                }
-            });
+            showAlert(Alert.AlertType.ERROR, "Ошибка инициализации", "❌ " + e.getMessage());
         }
     }
 
     private void setupTableColumns() {
-        if (codeColumn != null) codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
-        if (nameColumn != null) nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        if (minAgeColumn != null) minAgeColumn.setCellValueFactory(new PropertyValueFactory<>("minAge"));
-        if (maxAgeColumn != null) maxAgeColumn.setCellValueFactory(new PropertyValueFactory<>("maxAge"));
-        if (priceColumn != null) priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
-        if (quantityColumn != null) quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-        if (dateColumn != null) dateColumn.setCellValueFactory(new PropertyValueFactory<>("arrivalDate"));
-        if (supplierColumn != null) supplierColumn.setCellValueFactory(new PropertyValueFactory<>("supplier"));
+        codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        minAgeColumn.setCellValueFactory(new PropertyValueFactory<>("minAge"));
+        maxAgeColumn.setCellValueFactory(new PropertyValueFactory<>("maxAge"));
+        priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        dateColumn.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
+                cell.getValue().getArrivalDate() != null
+                        ? cell.getValue().getArrivalDate().format(DATE_FORMATTER)
+                        : "")
+        );
+        supplierColumn.setCellValueFactory(new PropertyValueFactory<>("supplier"));
     }
 
-    private void startAutoBackupTimer() {
-        autoBackupTimer = new Timer("AutoBackupTimer", true);
-        long BACKUP_INTERVAL = 5 * 60 * 1000;
+    private void setupButtons() {
+        fillDbButton.setOnAction(e -> handleFillDatabase());
+        refreshButton.setOnAction(e -> handleRefresh());
+        indexesButton.setOnAction(e -> handleBuildIndexes());
+        addButton.setOnAction(e -> handleAddToy());
+        deleteButton.setOnAction(e -> handleDelete());
+        sortButton.setOnAction(e -> handleSort());
+        exportButton.setOnAction(e -> handleExport());
+        searchButton.setOnAction(e -> handleSearch());
+        loadBackupButton.setOnAction(e -> handleLoadBackup());
+        searchField.setOnKeyPressed(event -> {
+            if (event.getCode().toString().equals("ENTER")) {
+                handleSearch();
+            }
+        });
+    }
 
-        autoBackupTimer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
+    private void setupMenu() {
+        miExit.setOnAction(e -> {
+            try { if (database != null) database.createBackup(); } catch (Exception ignored) {}
+            stopAutoBackupTimer();
+            System.exit(0);
+        });
+
+        miExportCsv.setOnAction(e -> handleExport());
+        miAddToy.setOnAction(e -> handleAddToy());
+        miDeleteToy.setOnAction(e -> handleDelete());
+        miBuildIndexes.setOnAction(e -> handleBuildIndexes());
+        miFillTestData.setOnAction(e -> handleFillDatabase());
+        miRefresh.setOnAction(e -> handleRefresh());
+        miSort.setOnAction(e -> handleSort());
+        miOpenBackup.setOnAction(e -> handleLoadBackup());
+
+        miOpenData.setOnAction(e -> {
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Открыть файл данных");
+            fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Файл базы (*.dat)", "*.dat"));
+            File file = fc.showOpenDialog(menuBar.getScene().getWindow());
+            if (file != null) {
                 try {
-                    if (database.createBackup()) {
-                        System.out.println("⏰ Автоматический бекап создан");
-                        database.cleanOldBackups(10);
-                    }
-                } catch (Exception e) {
-                    System.err.println("❌ Ошибка при автоматическом бекапе: " + e.getMessage());
+                    java.nio.file.Files.copy(
+                            file.toPath(),
+                            new File("data" + File.separator + "toys.dat").toPath(),
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                    );
+                    database.buildIndexes();
+                    refreshTable();
+                    updateStatus("Загружен файл базы: " + file.getName());
+                    showAlert(Alert.AlertType.INFORMATION, "Успех", "База загружена:\n" + file.getAbsolutePath());
+                } catch (Exception ex) {
+                    showAlert(Alert.AlertType.ERROR, "Ошибка", "Не удалось открыть файл: " + ex.getMessage());
                 }
             }
-        }, BACKUP_INTERVAL, BACKUP_INTERVAL);
+        });
+
+        miAbout.setOnAction(e ->
+                showAlert(Alert.AlertType.INFORMATION, "О программе",
+                        "Toy Management\nJavaFX-приложение с индексной БД, бекапами и CSV-экспортом.")
+        );
+
+        miHelp.setOnAction(e ->
+                showAlert(Alert.AlertType.INFORMATION, "Справка",
+                        "Поиск: поставщик | дата dd.MM.yyyy | возраст min-max\n" +
+                                "Экспорт: Файл → Экспорт в CSV\n" +
+                                "Бекап: Файл → Загрузить бекап, авто-бекап включён.")
+        );
     }
 
-    public void stopAutoBackupTimer() {
-        if (autoBackupTimer != null) {
-            autoBackupTimer.cancel();
-            System.out.println("⏹️ Таймер автобекапа остановлен");
-        }
+    private void setupContextHelp() {
+        if (helpLabel == null) return;
+        Map<Control, String> tips = new LinkedHashMap<>();
+        tips.put(searchField, "Введите: поставщик | дата (dd.MM.yyyy) | возраст (min-max)");
+        tips.put(searchButton, "Найти записи по введённому запросу");
+        tips.put(fillDbButton, "Заполнить БД тестовыми данными (перезапись)");
+        tips.put(refreshButton, "Обновить таблицу из файла данных");
+        tips.put(indexesButton, "Перестроить индексы по дате/поставщику/возрасту");
+        tips.put(addButton, "Добавить новую запись об игрушке");
+        tips.put(deleteButton, "Удалить выделенную или по критерию");
+        tips.put(sortButton, "Показать диалог сортировки");
+        tips.put(exportButton, "Экспорт текущих записей в CSV (папка exports)");
+        tips.put(loadBackupButton, "Загрузить одну из резервных копий");
+
+        tips.forEach((control, msg) -> {
+            control.setOnMouseEntered(ev -> {
+                if (miShowStatusHelp.isSelected())
+                    helpLabel.setText(msg);
+            });
+            control.setOnMouseExited(ev -> {
+                if (miShowStatusHelp.isSelected())
+                    helpLabel.setText("");
+            });
+        });
     }
 
     private void handleFillDatabase() {
@@ -212,6 +255,7 @@ public class ToyManagementController {
                     );
                 } catch (Exception e) {
                     showAlert(Alert.AlertType.ERROR, "Ошибка", "❌ Проверьте корректность данных: " + e.getMessage());
+                    return null;
                 }
             }
             return null;
@@ -231,7 +275,6 @@ public class ToyManagementController {
 
     private void handleDelete() {
         Toy selectedToy = toysTable.getSelectionModel().getSelectedItem();
-
         if (selectedToy != null) {
             handleDeleteSelected(selectedToy);
         } else {
@@ -248,11 +291,9 @@ public class ToyManagementController {
         if (confirmDialog.showAndWait().get() == ButtonType.OK) {
             try {
                 boolean deleted = database.deleteToy(selectedToy);
-
                 if (deleted) {
                     refreshTable();
-                    showAlert(Alert.AlertType.INFORMATION, "Успех",
-                            "✅ Удалено: " + selectedToy.getName());
+                    showAlert(Alert.AlertType.INFORMATION, "Успех", "✅ Удалено: " + selectedToy.getName());
                     updateStatus("Удалено: " + selectedToy.getName());
                 } else {
                     showAlert(Alert.AlertType.ERROR, "Ошибка", "❌ Не удалось удалить игрушку!");
@@ -265,7 +306,7 @@ public class ToyManagementController {
 
     private void handleDeleteByIndex() {
         Dialog<Integer> dialog = new Dialog<>();
-        dialog.setTitle("Удаление по индексам");
+        dialog.setTitle("Удаление по критериям");
         dialog.setHeaderText("Выберите критерий удаления");
 
         VBox vbox = new VBox(10);
@@ -278,18 +319,15 @@ public class ToyManagementController {
         RadioButton supplierRb = new RadioButton("🏢 По поставщику");
         supplierRb.setToggleGroup(group);
         supplierRb.setSelected(true);
-
         RadioButton dateRb = new RadioButton("📅 По дате поступления");
         dateRb.setToggleGroup(group);
-
         RadioButton ageRb = new RadioButton("👶 По возрастному диапазону");
         ageRb.setToggleGroup(group);
 
         TextField valueField = new TextField();
         valueField.setPromptText("Введите значение");
 
-        vbox.getChildren().addAll(info, info2, new Separator(), supplierRb, dateRb, ageRb,
-                new Label("Введите значение:"), valueField);
+        vbox.getChildren().addAll(info, info2, new Separator(), supplierRb, dateRb, ageRb, new Label("Введите значение:"), valueField);
 
         dialog.getDialogPane().setContent(vbox);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -348,10 +386,70 @@ public class ToyManagementController {
         });
     }
 
+    private void handleSort() {
+        Dialog<Integer> dialog = new Dialog<>();
+        dialog.setTitle("Сортировка");
+        dialog.setHeaderText("Выберите параметры сортировки");
+
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new javafx.geometry.Insets(20));
+
+        ToggleGroup group = new ToggleGroup();
+        RadioButton dateRb = new RadioButton("📅 По дате поступления");
+        dateRb.setToggleGroup(group);
+        dateRb.setSelected(true);
+        RadioButton supplierRb = new RadioButton("🏢 По поставщику");
+        supplierRb.setToggleGroup(group);
+        RadioButton ageRb = new RadioButton("👶 По возрасту");
+        ageRb.setToggleGroup(group);
+
+        CheckBox ascendingCb = new CheckBox("По возрастанию");
+        ascendingCb.setSelected(true);
+
+        vbox.getChildren().addAll(new Label("Выберите поле:"), dateRb, supplierRb, ageRb, new Separator(), ascendingCb);
+
+        dialog.getDialogPane().setContent(vbox);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                if (dateRb.isSelected()) return 0;
+                if (supplierRb.isSelected()) return 1;
+                if (ageRb.isSelected()) return 2;
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(sortType -> {
+            try {
+                List<Toy> sorted = null;
+                boolean ascending = ascendingCb.isSelected();
+
+                switch (sortType) {
+                    case 0:
+                        sorted = database.getToysByDate(ascending);
+                        break;
+                    case 1:
+                        sorted = database.getToysBySupplier(ascending);
+                        break;
+                    case 2:
+                        sorted = database.getToysByAgeRange(ascending);
+                        break;
+                }
+
+                if (sorted != null) {
+                    updateTable(sorted);
+                    updateStatus("Сортировка: " + sorted.size() + " записей");
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                showAlert(Alert.AlertType.ERROR, "Ошибка", "❌ Ошибка: " + e.getMessage());
+            }
+        });
+    }
+
     private void handleExport() {
         try {
             List<Toy> toys = database.getAllToys();
-
             if (toys.isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Внимание", "❌ Таблица пуста! Нечего экспортировать.");
                 return;
@@ -400,7 +498,6 @@ public class ToyManagementController {
                 confirmDialog.setContentText("Будут экспортированы " + toys.size() + " записей в файл:\n" + fileName);
 
                 if (confirmDialog.showAndWait().get() == ButtonType.OK) {
-                    System.out.println("📥 Начало экспорта в CSV...");
                     if (CSVExporter.exportToCSV(toys, fileName)) {
                         showAlert(Alert.AlertType.INFORMATION, "Успех",
                                 "✅ Таблица успешно экспортирована!\n\nФайл: exports/" + fileName + "\n\n" + toys.size() + " записей");
@@ -411,15 +508,55 @@ public class ToyManagementController {
                 }
             });
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("❌ Ошибка при подготовке к экспорту: " + e.getMessage());
             showAlert(Alert.AlertType.ERROR, "Ошибка", "❌ Ошибка: " + e.getMessage());
+        }
+    }
+
+    private void handleSearch() {
+        String searchValue = searchField.getText().trim();
+        if (searchValue.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Внимание", "⚠️ Введите значение для поиска!");
+            return;
+        }
+
+        try {
+            List<Toy> results = null;
+
+            try {
+                results = database.findBySupplier(searchValue);
+                if (!results.isEmpty()) {
+                    updateTable(results);
+                    updateStatus("Поиск по поставщику: " + results.size() + " найдено");
+                    return;
+                }
+            } catch (Exception ignored) {}
+
+            try {
+                LocalDate date = LocalDate.parse(searchValue, DATE_FORMATTER);
+                results = database.findByDate(date);
+                if (!results.isEmpty()) {
+                    updateTable(results);
+                    updateStatus("Поиск по дате: " + results.size() + " найдено");
+                    return;
+                }
+            } catch (Exception ignored) {}
+
+            results = database.findByAgeRange(searchValue);
+            if (!results.isEmpty()) {
+                updateTable(results);
+                updateStatus("Поиск по возрасту: " + results.size() + " найдено");
+                return;
+            }
+
+            showAlert(Alert.AlertType.WARNING, "Результат", "❌ Ничего не найдено по запросу: " + searchValue);
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Ошибка", "❌ Ошибка поиска: " + e.getMessage());
         }
     }
 
     private void handleLoadBackup() {
         try {
             List<String> backups = database.getBackupList();
-
             if (backups.isEmpty()) {
                 showAlert(Alert.AlertType.WARNING, "Внимание", "❌ Бекапов не найдено!");
                 return;
@@ -461,12 +598,9 @@ public class ToyManagementController {
                 confirmDialog.setContentText("Вы уверены что хотите загрузить базу из:\n" + selectedBackup + "\n\nТекущие данные будут сохранены.");
 
                 if (confirmDialog.showAndWait().get() == ButtonType.OK) {
-                    System.out.println("📥 Загрузка бекапа: " + selectedBackup);
                     if (database.restoreFromBackup(selectedBackup)) {
-                        System.out.println("✅ Бекап загружен");
                         refreshTable();
-                        showAlert(Alert.AlertType.INFORMATION, "Успех",
-                                "✅ База загружена из бекапа:\n" + selectedBackup);
+                        showAlert(Alert.AlertType.INFORMATION, "Успех", "✅ База загружена из бекапа:\n" + selectedBackup);
                         updateStatus("База загружена: " + selectedBackup);
                     } else {
                         showAlert(Alert.AlertType.ERROR, "Ошибка", "❌ Не удалось загрузить бекап!");
@@ -474,144 +608,23 @@ public class ToyManagementController {
                 }
             });
         } catch (Exception e) {
-            System.err.println("❌ Ошибка в handleLoadBackup: " + e.getMessage());
-            e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Ошибка", "❌ " + e.getMessage());
         }
-    }
-
-    private void handleSearch() {
-        String searchValue = searchField.getText().trim();
-        if (searchValue.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Внимание", "⚠️ Введите значение для поиска!");
-            return;
-        }
-
-        try {
-            List<Toy> results = null;
-
-            try {
-                results = database.findBySupplier(searchValue);
-                if (!results.isEmpty()) {
-                    updateTable(results);
-                    updateStatus("Поиск по поставщику: " + results.size() + " найдено");
-                    return;
-                }
-
-                try {
-                    LocalDate date = LocalDate.parse(searchValue, DATE_FORMATTER);
-                    results = database.findByDate(date);
-                    if (!results.isEmpty()) {
-                        updateTable(results);
-                        updateStatus("Поиск по дате: " + results.size() + " найдено");
-                        return;
-                    }
-                } catch (Exception ignored) {}
-
-                results = database.findByAgeRange(searchValue);
-                if (!results.isEmpty()) {
-                    updateTable(results);
-                    updateStatus("Поиск по возрасту: " + results.size() + " найдено");
-                    return;
-                }
-
-                showAlert(Alert.AlertType.WARNING, "Результат", "❌ Ничего не найдено по запросу: " + searchValue);
-            } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Ошибка", "❌ Ошибка поиска: " + e.getMessage());
-            }
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Ошибка", "❌ " + e.getMessage());
-        }
-    }
-
-    private void handleSort() {
-        Dialog<Integer> dialog = new Dialog<>();
-        dialog.setTitle("Сортировка");
-        dialog.setHeaderText("Выберите параметры сортировки");
-
-        VBox vbox = new VBox(10);
-        vbox.setPadding(new javafx.geometry.Insets(20));
-
-        ToggleGroup group = new ToggleGroup();
-        RadioButton dateRb = new RadioButton("📅 По дате поступления");
-        dateRb.setToggleGroup(group);
-        dateRb.setSelected(true);
-
-        RadioButton supplierRb = new RadioButton("🏢 По поставщику");
-        supplierRb.setToggleGroup(group);
-
-        RadioButton ageRb = new RadioButton("👶 По возрасту");
-        ageRb.setToggleGroup(group);
-
-        CheckBox ascendingCb = new CheckBox("По возрастанию");
-        ascendingCb.setSelected(true);
-
-        vbox.getChildren().addAll(new Label("Выберите поле:"), dateRb, supplierRb, ageRb,
-                new Separator(), ascendingCb);
-
-        dialog.getDialogPane().setContent(vbox);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == ButtonType.OK) {
-                if (dateRb.isSelected()) return 0;
-                if (supplierRb.isSelected()) return 1;
-                if (ageRb.isSelected()) return 2;
-            }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(sortType -> {
-            try {
-                List<Toy> sorted = null;
-                boolean ascending = vbox.getChildren().stream()
-                        .filter(n -> n instanceof CheckBox)
-                        .map(n -> (CheckBox) n)
-                        .findFirst()
-                        .map(CheckBox::isSelected)
-                        .orElse(true);
-
-                switch (sortType) {
-                    case 0:
-                        sorted = database.getToysByDate(ascending);
-                        break;
-                    case 1:
-                        sorted = database.getToysBySupplier(ascending);
-                        break;
-                    case 2:
-                        sorted = database.getToysByAgeRange(ascending);
-                        break;
-                }
-
-                if (sorted != null) {
-                    updateTable(sorted);
-                    updateStatus("Сортировка: " + sorted.size() + " записей");
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                showAlert(Alert.AlertType.ERROR, "Ошибка", "❌ Ошибка: " + e.getMessage());
-            }
-        });
     }
 
     private void refreshTable() {
         try {
-            System.out.println("🔄 Обновление таблицы...");
             List<Toy> toys = database.getAllToys();
-            System.out.println("✅ Загружено " + toys.size() + " записей");
             updateTable(toys);
             updateStatus("Всего записей: " + toys.size());
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("❌ Ошибка загрузки таблицы: " + e.getMessage());
-            e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Ошибка", "❌ Ошибка: " + e.getMessage());
         }
     }
 
     private void updateTable(List<Toy> toys) {
         ObservableList<Toy> data = FXCollections.observableArrayList(toys);
-        if (toysTable != null) {
-            toysTable.setItems(data);
-        }
+        toysTable.setItems(data);
     }
 
     private void updateStatus(String message) {
@@ -626,5 +639,28 @@ public class ToyManagementController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    private void startAutoBackupTimer() {
+        autoBackupTimer = new Timer("AutoBackupTimer", true);
+        long BACKUP_INTERVAL = 5 * 60 * 1000;
+        autoBackupTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    if (database.createBackup()) {
+                        database.cleanOldBackups(10);
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ Ошибка при автоматическом бекапе: " + e.getMessage());
+                }
+            }
+        }, BACKUP_INTERVAL, BACKUP_INTERVAL);
+    }
+
+    public void stopAutoBackupTimer() {
+        if (autoBackupTimer != null) {
+            autoBackupTimer.cancel();
+        }
     }
 }
