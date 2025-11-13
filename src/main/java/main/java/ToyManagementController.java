@@ -7,8 +7,10 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.geometry.Bounds;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,12 +40,19 @@ public class ToyManagementController {
     @FXML public TableColumn<Toy, String> dateColumn;
     @FXML public TableColumn<Toy, String> supplierColumn;
 
-    @FXML public MenuBar menuBar;
-    @FXML public MenuItem miOpenData, miOpenBackup, miExportCsv, miExit;
-    @FXML public MenuItem miAddToy, miDeleteToy, miBuildIndexes, miFillTestData;
-    @FXML public CheckMenuItem miShowStatusHelp;
-    @FXML public MenuItem miSort, miRefresh, miAbout, miHelp;
+    // НОВОЕ: Кастомное меню
+    @FXML public HBox customMenuBar;
+    @FXML public Button btnFileMenu;
+    @FXML public Button btnEditMenu;
+    @FXML public Button btnViewMenu;
+    @FXML public Button btnHelpMenu;
     @FXML public Label helpLabel;
+
+    // ContextMenus создаются программно
+    private ContextMenu fileContextMenu;
+    private ContextMenu editContextMenu;
+    private ContextMenu viewContextMenu;
+    private ContextMenu helpContextMenu;
 
     private ToyDatabase database;
     private final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
@@ -56,7 +65,7 @@ public class ToyManagementController {
             database.loadIndexes();
             setupTableColumns();
             setupButtons();
-            setupMenu();
+            setupCustomMenu(); // НОВОЕ: кастомное меню
             setupContextHelp();
             refreshTable();
             startAutoBackupTimer();
@@ -68,58 +77,99 @@ public class ToyManagementController {
     }
 
     private void setupTableColumns() {
-        codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
-        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        minAgeColumn.setCellValueFactory(new PropertyValueFactory<>("minAge"));
-        maxAgeColumn.setCellValueFactory(new PropertyValueFactory<>("maxAge"));
-        priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
-        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-        dateColumn.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
+        if (codeColumn != null) codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
+        if (nameColumn != null) nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        if (minAgeColumn != null) minAgeColumn.setCellValueFactory(new PropertyValueFactory<>("minAge"));
+        if (maxAgeColumn != null) maxAgeColumn.setCellValueFactory(new PropertyValueFactory<>("maxAge"));
+        if (priceColumn != null) priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+        if (quantityColumn != null) quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        if (dateColumn != null) dateColumn.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
                 cell.getValue().getArrivalDate() != null
                         ? cell.getValue().getArrivalDate().format(DATE_FORMATTER)
                         : "")
         );
-        supplierColumn.setCellValueFactory(new PropertyValueFactory<>("supplier"));
+        if (supplierColumn != null) supplierColumn.setCellValueFactory(new PropertyValueFactory<>("supplier"));
     }
 
     private void setupButtons() {
-        fillDbButton.setOnAction(e -> handleFillDatabase());
-        refreshButton.setOnAction(e -> handleRefresh());
-        indexesButton.setOnAction(e -> handleBuildIndexes());
-        addButton.setOnAction(e -> handleAddToy());
-        deleteButton.setOnAction(e -> handleDelete());
-        sortButton.setOnAction(e -> handleSort());
-        exportButton.setOnAction(e -> handleExport());
-        searchButton.setOnAction(e -> handleSearch());
-        loadBackupButton.setOnAction(e -> handleLoadBackup());
-        searchField.setOnKeyPressed(event -> {
-            if (event.getCode().toString().equals("ENTER")) {
-                handleSearch();
-            }
-        });
+        if (fillDbButton != null) fillDbButton.setOnAction(e -> handleFillDatabase());
+        if (refreshButton != null) refreshButton.setOnAction(e -> handleRefresh());
+        if (indexesButton != null) indexesButton.setOnAction(e -> handleBuildIndexes());
+        if (addButton != null) addButton.setOnAction(e -> handleAddToy());
+        if (deleteButton != null) deleteButton.setOnAction(e -> handleDelete());
+        if (sortButton != null) sortButton.setOnAction(e -> handleSort());
+        if (exportButton != null) exportButton.setOnAction(e -> handleExport());
+        if (searchButton != null) searchButton.setOnAction(e -> handleSearch());
+        if (loadBackupButton != null) loadBackupButton.setOnAction(e -> handleLoadBackup());
+        if (searchField != null) {
+            searchField.setOnKeyPressed(event -> {
+                if (event.getCode().toString().equals("ENTER")) {
+                    handleSearch();
+                }
+            });
+        }
     }
 
-    private void setupMenu() {
-        miExit.setOnAction(e -> {
-            try { if (database != null) database.createBackup(); } catch (Exception ignored) {}
-            stopAutoBackupTimer();
-            System.exit(0);
-        });
+    // ====== НОВОЕ: Кастомное меню ======
+    private void setupCustomMenu() {
+        System.out.println("DEBUG: setupCustomMenu() начало");
 
-        miExportCsv.setOnAction(e -> handleExport());
-        miAddToy.setOnAction(e -> handleAddToy());
-        miDeleteToy.setOnAction(e -> handleDelete());
-        miBuildIndexes.setOnAction(e -> handleBuildIndexes());
-        miFillTestData.setOnAction(e -> handleFillDatabase());
-        miRefresh.setOnAction(e -> handleRefresh());
-        miSort.setOnAction(e -> handleSort());
-        miOpenBackup.setOnAction(e -> handleLoadBackup());
+        // Создаём ContextMenus программно (не через FXML!)
+        createFileMenu();
+        createEditMenu();
+        createViewMenu();
+        createHelpMenu();
 
+        // Привязываем кнопки к ContextMenus
+        if (btnFileMenu != null) {
+            btnFileMenu.setOnAction(e -> {
+                if (fileContextMenu != null) {
+                    Bounds bounds = btnFileMenu.localToScreen(btnFileMenu.getBoundsInLocal());
+                    fileContextMenu.show(btnFileMenu, bounds.getCenterX(), bounds.getCenterY() + 25);
+                }
+            });
+        }
+
+        if (btnEditMenu != null) {
+            btnEditMenu.setOnAction(e -> {
+                if (editContextMenu != null) {
+                    Bounds bounds = btnEditMenu.localToScreen(btnEditMenu.getBoundsInLocal());
+                    editContextMenu.show(btnEditMenu, bounds.getCenterX(), bounds.getCenterY() + 25);
+                }
+            });
+        }
+
+        if (btnViewMenu != null) {
+            btnViewMenu.setOnAction(e -> {
+                if (viewContextMenu != null) {
+                    Bounds bounds = btnViewMenu.localToScreen(btnViewMenu.getBoundsInLocal());
+                    viewContextMenu.show(btnViewMenu, bounds.getCenterX(), bounds.getCenterY() + 25);
+                }
+            });
+        }
+
+        if (btnHelpMenu != null) {
+            btnHelpMenu.setOnAction(e -> {
+                if (helpContextMenu != null) {
+                    Bounds bounds = btnHelpMenu.localToScreen(btnHelpMenu.getBoundsInLocal());
+                    helpContextMenu.show(btnHelpMenu, bounds.getCenterX(), bounds.getCenterY() + 25);
+                }
+            });
+        }
+
+        System.out.println("DEBUG: setupCustomMenu() окончено");
+    }
+
+    private void createFileMenu() {
+        fileContextMenu = new ContextMenu();
+
+        MenuItem miOpenData = new MenuItem("Открыть базу...");
         miOpenData.setOnAction(e -> {
             FileChooser fc = new FileChooser();
             fc.setTitle("Открыть файл данных");
             fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Файл базы (*.dat)", "*.dat"));
-            File file = fc.showOpenDialog(menuBar.getScene().getWindow());
+            javafx.stage.Window window = toysTable != null && toysTable.getScene() != null ? toysTable.getScene().getWindow() : null;
+            File file = fc.showOpenDialog(window);
             if (file != null) {
                 try {
                     java.nio.file.Files.copy(
@@ -137,21 +187,74 @@ public class ToyManagementController {
             }
         });
 
-        miAbout.setOnAction(e ->
-                showAlert(Alert.AlertType.INFORMATION, "О программе",
-                        "Toy Management\nJavaFX-приложение с индексной БД, бекапами и CSV-экспортом.")
-        );
+        MenuItem miOpenBackup = new MenuItem("Загрузить бекап...");
+        miOpenBackup.setOnAction(e -> handleLoadBackup());
 
-        miHelp.setOnAction(e ->
-                showAlert(Alert.AlertType.INFORMATION, "Справка",
-                        "Поиск: поставщик | дата dd.MM.yyyy | возраст min-max\n" +
-                                "Экспорт: Файл → Экспорт в CSV\n" +
-                                "Бекап: Файл → Загрузить бекап, авто-бекап включён.")
-        );
+        MenuItem miExportCsv = new MenuItem("Экспорт в CSV...");
+        miExportCsv.setOnAction(e -> handleExport());
+
+        MenuItem miExit = new MenuItem("Выход");
+        miExit.setOnAction(e -> {
+            try { if (database != null) database.createBackup(); } catch (Exception ignored) {}
+            stopAutoBackupTimer();
+            System.exit(0);
+        });
+
+        fileContextMenu.getItems().addAll(miOpenData, miOpenBackup, new SeparatorMenuItem(), miExportCsv, new SeparatorMenuItem(), miExit);
+    }
+
+    private void createEditMenu() {
+        editContextMenu = new ContextMenu();
+
+        MenuItem miAddToy = new MenuItem("Добавить запись...");
+        miAddToy.setOnAction(e -> handleAddToy());
+
+        MenuItem miDeleteToy = new MenuItem("Удалить запись/по критерию...");
+        miDeleteToy.setOnAction(e -> handleDelete());
+
+        MenuItem miBuildIndexes = new MenuItem("Перестроить индексы");
+        miBuildIndexes.setOnAction(e -> handleBuildIndexes());
+
+        MenuItem miFillTestData = new MenuItem("Заполнить тестовыми данными");
+        miFillTestData.setOnAction(e -> handleFillDatabase());
+
+        editContextMenu.getItems().addAll(miAddToy, miDeleteToy, new SeparatorMenuItem(), miBuildIndexes, miFillTestData);
+    }
+
+    private void createViewMenu() {
+        viewContextMenu = new ContextMenu();
+
+        CheckMenuItem miShowStatusHelp = new CheckMenuItem("Показывать подсказки в статусе");
+        miShowStatusHelp.setSelected(true);
+
+        MenuItem miSort = new MenuItem("Сортировка...");
+        miSort.setOnAction(e -> handleSort());
+
+        MenuItem miRefresh = new MenuItem("Обновить");
+        miRefresh.setOnAction(e -> handleRefresh());
+
+        viewContextMenu.getItems().addAll(miShowStatusHelp, miSort, miRefresh);
+    }
+
+    private void createHelpMenu() {
+        helpContextMenu = new ContextMenu();
+
+        MenuItem miAbout = new MenuItem("О программе");
+        miAbout.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "О программе",
+                "Toy Management\nJavaFX-приложение с индексной БД, бекапами и CSV-экспортом."));
+
+        MenuItem miHelp = new MenuItem("Справка по действиям");
+        miHelp.setOnAction(e -> showAlert(Alert.AlertType.INFORMATION, "Справка",
+                "Поиск: поставщик | дата dd.MM.yyyy | возраст min-max\n" +
+                        "Экспорт: Файл → Экспорт в CSV\n" +
+                        "Бекап: Файл → Загрузить бекап, авто-бекап включён."));
+
+        helpContextMenu.getItems().addAll(miAbout, miHelp);
     }
 
     private void setupContextHelp() {
         if (helpLabel == null) return;
+
         Map<Control, String> tips = new LinkedHashMap<>();
         tips.put(searchField, "Введите: поставщик | дата (dd.MM.yyyy) | возраст (min-max)");
         tips.put(searchButton, "Найти записи по введённому запросу");
@@ -163,18 +266,19 @@ public class ToyManagementController {
         tips.put(sortButton, "Показать диалог сортировки");
         tips.put(exportButton, "Экспорт текущих записей в CSV (папка exports)");
         tips.put(loadBackupButton, "Загрузить одну из резервных копий");
+        tips.put(btnFileMenu, "Файловые операции");
+        tips.put(btnEditMenu, "Редактирование данных");
+        tips.put(btnViewMenu, "Вид и сортировка");
+        tips.put(btnHelpMenu, "Помощь и информация");
 
         tips.forEach((control, msg) -> {
-            control.setOnMouseEntered(ev -> {
-                if (miShowStatusHelp.isSelected())
-                    helpLabel.setText(msg);
-            });
-            control.setOnMouseExited(ev -> {
-                if (miShowStatusHelp.isSelected())
-                    helpLabel.setText("");
-            });
+            if (control == null) return;
+            control.setOnMouseEntered(ev -> helpLabel.setText(msg));
+            control.setOnMouseExited(ev -> helpLabel.setText(""));
         });
     }
+
+    // ====== ВСЕ ОСТАЛЬНЫЕ ОБРАБОТЧИКИ ======
 
     private void handleFillDatabase() {
         try {
@@ -321,7 +425,7 @@ public class ToyManagementController {
         supplierRb.setSelected(true);
         RadioButton dateRb = new RadioButton("📅 По дате поступления");
         dateRb.setToggleGroup(group);
-        RadioButton ageRb = new RadioButton("👶 По возрастному диапазону");
+        RadioButton ageRb = new RadioButton(" По возрастному диапазону");
         ageRb.setToggleGroup(group);
 
         TextField valueField = new TextField();
@@ -572,7 +676,9 @@ public class ToyManagementController {
             ComboBox<String> backupCombo = new ComboBox<>();
             ObservableList<String> items = FXCollections.observableArrayList(backups);
             backupCombo.setItems(items);
-            backupCombo.setValue(backups.get(0));
+            if (!backups.isEmpty()) {
+                backupCombo.setValue(backups.get(0));
+            }
 
             Label label = new Label("Доступные бекапы:");
             Label info = new Label("Выбранный бекап будет загружен и восстановлен.\nТекущие данные будут сохранены в pre_restore_backup.dat");
@@ -644,7 +750,7 @@ public class ToyManagementController {
     private void startAutoBackupTimer() {
         autoBackupTimer = new Timer("AutoBackupTimer", true);
         long BACKUP_INTERVAL = 5 * 60 * 1000;
-        autoBackupTimer.scheduleAtFixedRate(new TimerTask() {
+        autoBackupTimer.scheduleAtFixedRate(new java.util.TimerTask() {
             @Override
             public void run() {
                 try {

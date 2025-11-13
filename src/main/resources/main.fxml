@@ -5,53 +5,24 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
 
 <BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
 
     <top>
         <VBox spacing="0">
-            <!-- Меню команд -->
-            <MenuBar fx:id="menuBar" style="-fx-background-color: #111; -fx-text-fill: #ff6600;">
-                <menus>
-                    <Menu text="Файл">
-                        <items>
-                            <MenuItem fx:id="miOpenData" text="Открыть базу..."/>
-                            <MenuItem fx:id="miOpenBackup" text="Загрузить бекап..."/>
-                            <SeparatorMenuItem/>
-                            <MenuItem fx:id="miExportCsv" text="Экспорт в CSV..."/>
-                            <SeparatorMenuItem/>
-                            <MenuItem fx:id="miExit" text="Выход"/>
-                        </items>
-                    </Menu>
-                    <Menu text="Правка">
-                        <items>
-                            <MenuItem fx:id="miAddToy" text="Добавить запись..."/>
-                            <MenuItem fx:id="miDeleteToy" text="Удалить запись/по критерию..."/>
-                            <SeparatorMenuItem/>
-                            <MenuItem fx:id="miBuildIndexes" text="Перестроить индексы"/>
-                            <MenuItem fx:id="miFillTestData" text="Заполнить тестовыми данными"/>
-                        </items>
-                    </Menu>
-                    <Menu text="Вид">
-                        <items>
-                            <CheckMenuItem fx:id="miShowStatusHelp" text="Показывать подсказки в статусе" selected="true"/>
-                            <MenuItem fx:id="miSort" text="Сортировка..."/>
-                            <MenuItem fx:id="miRefresh" text="Обновить"/>
-                        </items>
-                    </Menu>
-                    <Menu text="Справка">
-                        <items>
-                            <MenuItem fx:id="miAbout" text="О программе"/>
-                            <MenuItem fx:id="miHelp" text="Справка по действиям"/>
-                        </items>
-                    </Menu>
-                </menus>
-            </MenuBar>
+            <!-- НОВОЕ: Кастомное меню вместо стандартного MenuBar -->
+            <HBox fx:id="customMenuBar" style="-fx-background-color: #111; -fx-padding: 8; -fx-spacing: 0;" VBox.vgrow="NEVER">
+                <Button fx:id="btnFileMenu" text=" Файл" style="-fx-padding: 8 15; -fx-background-color: #111; -fx-text-fill: #ff6600; -fx-font-weight: bold; -fx-cursor: hand;"/>
+                <Button fx:id="btnEditMenu" text="️ Правка" style="-fx-padding: 8 15; -fx-background-color: #111; -fx-text-fill: #ff6600; -fx-font-weight: bold; -fx-cursor: hand;"/>
+                <Button fx:id="btnViewMenu" text="️ Вид" style="-fx-padding: 8 15; -fx-background-color: #111; -fx-text-fill: #ff6600; -fx-font-weight: bold; -fx-cursor: hand;"/>
+                <Button fx:id="btnHelpMenu" text=" Справка" style="-fx-padding: 8 15; -fx-background-color: #111; -fx-text-fill: #ff6600; -fx-font-weight: bold; -fx-cursor: hand;"/>
+            </HBox>
 
             <!-- Чёрная шапка -->
             <VBox style="-fx-background-color: #1a1a1a; -fx-padding: 15; -fx-border-color: #ff6600; -fx-border-width: 0 0 2 0;">
                 <HBox spacing="10" style="-fx-alignment: CENTER_LEFT;">
-                    <Label text=" Управление базой игрушек" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #ff6600;"/>
+                    <Label text="Управление базой игрушек" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #ff6600;"/>
                     <TextField fx:id="searchField" prefWidth="200" promptText=" Поиск по названию, поставщику, дате..." style="-fx-control-inner-background: #2a2a2a; -fx-text-fill: #ffffff; -fx-prompt-text-fill: #888888;"/>
                     <Button fx:id="searchButton" text=" Поиск" style="-fx-padding: 8; -fx-background-color: #ff6600; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;"/>
                     <Region HBox.hgrow="ALWAYS"/>
@@ -63,12 +34,12 @@
 
     <left>
         <VBox style="-fx-background-color: #0d0d0d; -fx-padding: 15; -fx-spacing: 10; -fx-min-width: 200; -fx-border-color: #ff6600; -fx-border-width: 0 2 0 0;">
-            <Label text=" МЕНЮ" style="-fx-text-fill: #ff6600; -fx-font-size: 14; -fx-font-weight: bold;"/>
-            <Button fx:id="fillDbButton" text=" Заполнить БД" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
-            <Button fx:id="refreshButton" text=" Обновить" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
-            <Button fx:id="indexesButton" text=" Индексы" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
-            <Button fx:id="addButton" text=" Добавить" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
-            <Button fx:id="deleteButton" text="🗑 Удалить" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
+            <Label text="🧸 МЕНЮ" style="-fx-text-fill: #ff6600; -fx-font-size: 14; -fx-font-weight: bold;"/>
+            <Button fx:id="fillDbButton" text="Заполнить БД" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
+            <Button fx:id="refreshButton" text="Обновить" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
+            <Button fx:id="indexesButton" text="Индексы" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
+            <Button fx:id="addButton" text="Добавить" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
+            <Button fx:id="deleteButton" text=" Удалить" style="-fx-text-fill: #ffffff; -fx-background-color: #333333; -fx-padding: 10; -fx-cursor: hand; -fx-font-weight: bold;" maxWidth="Infinity"/>
         </VBox>
     </left>
 

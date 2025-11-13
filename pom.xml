@@ -101,6 +101,21 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>main.java.ToyManagementApp</mainClass>
+                    <options>
+                        <option>-Dprism.order=sw</option>
+                        <option>-Dprism.verbose=true</option>
+                        <option>-Djava.awt.headless=false</option>
+                    </options>
+                </configuration>
+            </plugin>
+
+
             <!-- Maven Jar Plugin для создания jar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
